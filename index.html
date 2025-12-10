@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIS-2 Betroffenheitsprüfung - DSN GROUP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <style>
+        :root {
+            /* DSN GROUP Corporate Colors */
+            --dsn-primary: #143466;
+            --dsn-primary-light: #1e4d8c;
+            --dsn-primary-dark: #0d2347;
+            --dsn-accent: #2563eb;
+            --dsn-text: #333333;
+            --dsn-text-light: #666666;
+            --dsn-bg-light: #f5f7fa;
+            --dsn-white: #ffffff;
+
+            /* Status Colors */
+            --status-kritis: #c0392b;
+            --status-kritis-bg: #fdf2f2;
+            --status-bwe: #d35400;
+            --status-bwe-bg: #fef6f0;
+            --status-we: #f39c12;
+            --status-we-bg: #fefcf3;
+            --status-ok: #27ae60;
+            --status-ok-bg: #f0fdf4;
+
+            --card-shadow: 0 2px 8px rgba(20, 52, 102, 0.08);
+            --card-shadow-hover: 0 4px 16px rgba(20, 52, 102, 0.12);
+            --border-radius: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Open Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--dsn-bg-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: var(--dsn-text);
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding: 24px;
+            background: var(--dsn-primary);
+            border-radius: var(--border-radius);
+            color: var(--dsn-white);
+        }
+
+        header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+
+        header p {
+            font-size: 0.95rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: var(--dsn-white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            padding: 32px 40px;
+            margin-bottom: 20px;
+            animation: fadeIn 0.4s ease-out;
+            border: 1px solid rgba(20, 52, 102, 0.08);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .progress-container {
+            background: var(--dsn-white);
+            border-radius: var(--border-radius);
+            padding: 16px 24px;
+            margin-bottom: 16px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(20, 52, 102, 0.08);
+        }
+
+        .progress-text {
+            font-size: 0.85rem;
+            color: var(--dsn-text-light);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--dsn-primary);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .question-number {
+            display: inline-block;
+            background: var(--dsn-primary);
+            color: var(--dsn-white);
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            letter-spacing: 0.02em;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            color: var(--dsn-primary);
+            line-height: 1.6;
+            margin-bottom: 24px;
+            font-weight: 600;
+        }
+
+        .info-box {
+            background: var(--dsn-bg-light);
+            border-left: 3px solid var(--dsn-primary);
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+            font-size: 0.9rem;
+            color: var(--dsn-text-light);
+            line-height: 1.6;
+        }
+
+        .info-box strong {
+            color: var(--dsn-primary);
+        }
+
+        .sector-info-toggle {
+            background: var(--dsn-bg-light);
+            border: 1px solid #d0d0d0;
+            border-radius: var(--border-radius);
+            margin-top: 0;
+            padding: 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sector-info-toggle:hover {
+            box-shadow: var(--card-shadow);
+            border-color: var(--dsn-primary);
+        }
+
+        .sector-info-header {
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: var(--dsn-primary);
+            user-select: none;
+        }
+
+        .sector-info-header::after {
+            content: "▼";
+            transition: transform 0.3s ease;
+            font-size: 0.8rem;
+        }
+
+        .sector-info-toggle.collapsed .sector-info-header::after {
+            transform: rotate(-90deg);
+        }
+
+        .sector-info-content {
+            max-height: 500px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            padding: 0 20px 20px 20px;
+        }
+
+        .sector-info-toggle.collapsed .sector-info-content {
+            max-height: 0;
+            padding: 0 20px;
+        }
+
+        .sector-list {
+            columns: 1;
+            column-gap: 20px;
+            margin-top: 10px;
+        }
+
+        @media (min-width: 768px) {
+            .sector-list {
+                columns: 2;
+            }
+        }
+
+        .sector-item {
+            background: white;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            break-inside: avoid;
+            font-size: 0.9rem;
+        }
+
+        .sector-item-title {
+            font-weight: 600;
+            color: var(--dsn-primary);
+            margin-bottom: 4px;
+        }
+
+        .sector-item-detail {
+            font-size: 0.85rem;
+            color: var(--dsn-text-light);
+        }
+
+        .sector-option-group {
+            background: var(--dsn-white);
+            border: 2px solid var(--dsn-primary);
+            border-radius: var(--border-radius);
+            padding: 28px;
+            margin-bottom: 48px;
+        }
+
+        .sector-option-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .sector-option-button {
+            width: 100%;
+            margin-bottom: 16px;
+            background: var(--dsn-primary) !important;
+            color: white !important;
+            font-size: 1rem !important;
+            padding: 16px 48px !important;
+        }
+
+        .sector-option-button:hover {
+            background: var(--dsn-primary-light) !important;
+        }
+
+        .sector-info-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--dsn-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 12px;
+            display: block;
+            padding: 0;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 14px 48px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            min-width: 140px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--card-shadow-hover);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-yes {
+            background: var(--status-ok);
+            color: var(--dsn-white);
+        }
+
+        .btn-yes:hover {
+            background: #219a52;
+        }
+
+        .btn-no {
+            background: var(--status-kritis);
+            color: var(--dsn-white);
+        }
+
+        .btn-no:hover {
+            background: #a93226;
+        }
+
+        .btn-restart {
+            background: var(--dsn-primary);
+            color: var(--dsn-white);
+            margin-top: 20px;
+        }
+
+        .btn-restart:hover {
+            background: var(--dsn-primary-light);
+        }
+
+        .btn-back {
+            background: transparent;
+            color: var(--dsn-text-light);
+            border: 1px solid #d1d5db;
+            padding: 10px 24px;
+            font-size: 0.9rem;
+        }
+
+        .btn-back:hover {
+            background: var(--dsn-bg-light);
+            border-color: var(--dsn-primary);
+            color: var(--dsn-primary);
+        }
+
+        .btn-uncertain {
+            background: var(--status-we);
+            color: var(--dsn-white);
+        }
+
+        .btn-uncertain:hover {
+            background: #daa315;
+        }
+
+        /* Result Styles */
+        .result-card {
+            text-align: center;
+        }
+
+        .result-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            display: inline-block;
+            width: 80px;
+            height: 80px;
+            line-height: 80px;
+            border-radius: 50%;
+            background: var(--dsn-bg-light);
+        }
+
+        .result-bwe .result-icon {
+            color: var(--status-bwe);
+            background: var(--status-bwe-bg);
+        }
+
+        .result-we .result-icon {
+            color: var(--status-we);
+            background: var(--status-we-bg);
+        }
+
+        .result-nicht-betroffen .result-icon {
+            color: var(--status-ok);
+            background: var(--status-ok-bg);
+            font-size: 40px;
+        }
+
+        .result-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .result-description {
+            font-size: 1rem;
+            color: var(--dsn-text-light);
+            line-height: 1.7;
+            margin-bottom: 24px;
+        }
+
+        .result-bwe {
+            border-top: 4px solid var(--status-bwe);
+        }
+
+        .result-bwe .result-title {
+            color: var(--status-bwe);
+        }
+
+        .result-we {
+            border-top: 4px solid var(--status-we);
+        }
+
+        .result-we .result-title {
+            color: var(--status-we);
+        }
+
+        .result-nicht-betroffen {
+            border-top: 4px solid var(--status-ok);
+        }
+
+        .result-nicht-betroffen .result-title {
+            color: var(--status-ok);
+        }
+
+        .result-badge {
+            display: inline-block;
+            padding: 8px 24px;
+            border-radius: var(--border-radius);
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 16px;
+        }
+
+        .badge-bwe {
+            background: var(--status-bwe-bg);
+            color: var(--status-bwe);
+            border: 2px solid var(--status-bwe);
+        }
+
+        .badge-we {
+            background: var(--status-we-bg);
+            color: var(--status-we);
+            border: 2px solid var(--status-we);
+        }
+
+        .badge-nicht-betroffen {
+            background: var(--status-ok-bg);
+            color: var(--status-ok);
+            border: 2px solid var(--status-ok);
+        }
+
+        .info-list {
+            text-align: left;
+            background: var(--dsn-bg-light);
+            padding: 20px 24px;
+            border-radius: var(--border-radius);
+            margin: 20px 0;
+        }
+
+        .info-list h4 {
+            color: var(--dsn-primary);
+            margin-bottom: 12px;
+            font-size: 1rem;
+        }
+
+        .info-list ul {
+            list-style: none;
+        }
+
+        .info-list li {
+            padding: 6px 0;
+            padding-left: 24px;
+            position: relative;
+            color: var(--dsn-text-light);
+            font-size: 0.9rem;
+        }
+
+        .info-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--status-ok);
+            font-weight: bold;
+        }
+
+        .start-screen {
+            text-align: center;
+        }
+
+        .start-screen h2 {
+            color: var(--dsn-primary);
+            font-size: 1.4rem;
+            margin-bottom: 16px;
+        }
+
+        .start-screen p {
+            color: var(--dsn-text-light);
+            line-height: 1.7;
+            margin-bottom: 12px;
+        }
+
+        .btn-start {
+            background: var(--dsn-primary);
+            color: var(--dsn-white);
+            padding: 16px 48px;
+            font-size: 1.1rem;
+            margin-top: 20px;
+        }
+
+        .btn-start:hover {
+            background: var(--dsn-primary-light);
+        }
+
+        .category-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .category-item {
+            padding: 16px 12px;
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+
+        .category-item.bwe {
+            background: var(--status-bwe-bg);
+            border: 1px solid rgba(211, 84, 0, 0.2);
+        }
+
+        .category-item.we {
+            background: var(--status-we-bg);
+            border: 1px solid rgba(243, 156, 18, 0.2);
+        }
+
+        .category-item h4 {
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+            color: var(--dsn-text);
+        }
+
+        .category-item p {
+            font-size: 0.75rem;
+            color: var(--dsn-text-light);
+            margin: 0;
+        }
+
+        .history-container {
+            background: var(--dsn-bg-light);
+            border-radius: var(--border-radius);
+            padding: 16px 20px;
+            margin-top: 20px;
+            border-left: 3px solid var(--dsn-primary);
+        }
+
+        .history-title {
+            font-weight: 600;
+            color: var(--dsn-primary);
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            font-size: 0.85rem;
+            border-bottom: 1px solid rgba(20, 52, 102, 0.1);
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .answer {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        .answer-yes {
+            background: var(--status-ok-bg);
+            color: var(--status-ok);
+        }
+
+        .answer-no {
+            background: var(--status-kritis-bg);
+            color: var(--status-kritis);
+        }
+
+        .answer-uncertain {
+            background: var(--status-we-bg);
+            color: var(--status-we);
+        }
+
+        .sectors-info-box {
+            background: var(--dsn-bg-light);
+            border-left: 3px solid var(--dsn-primary);
+            padding: 20px;
+            margin-bottom: 24px;
+            border-radius: var(--border-radius);
+            color: var(--dsn-text-light);
+            font-size: 0.95rem;
+        }
+
+        .sectors-container {
+            display: grid;
+            gap: 16px;
+        }
+
+        .sector-group {
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            border: 1px solid rgba(20, 52, 102, 0.1);
+            background: var(--dsn-white);
+        }
+
+        .sector-header {
+            background: var(--dsn-primary);
+            color: var(--dsn-white);
+            padding: 16px 20px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        .sector-header:hover {
+            background: var(--dsn-primary-light);
+        }
+
+        .sector-header.collapsed {
+            background: var(--dsn-primary-dark);
+        }
+
+        .toggle {
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+
+        .sector-header.collapsed .toggle {
+            transform: rotate(-90deg);
+        }
+
+        .sector-content {
+            padding: 16px 20px;
+            background: var(--dsn-white);
+            max-height: 500px;
+            overflow-y: auto;
+            transition: max-height 0.2s ease;
+        }
+
+        .sector-content.collapsed {
+            max-height: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .sector-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.95rem;
+            color: var(--dsn-text);
+        }
+
+        .sector-item:last-child {
+            border-bottom: none;
+        }
+
+        .legal-ref {
+            background: #fff3cd;
+            border-left: 3px solid #ffc107;
+            padding: 12px 16px;
+            border-radius: var(--border-radius);
+            margin-top: 12px;
+            font-size: 0.85rem;
+            color: #856404;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>NIS-2 Betroffenheitsprüfung</h1>
+            <p>Regelwerk-getriebene Entscheidungslogik</p>
+        </header>
+
+        <div id="progress-container" class="progress-container" style="display: none;">
+            <div class="progress-text" id="progress-text">Frage 1</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+
+        <div id="content-card" class="card"></div>
+    </div>
+
+    <script>
+        // ============================================
+        // 1. DATENSTRUKTUREN & GLOBALE VARIABLEN
+        // ============================================
+
+        let anlagenData = null;
+        let regelnData = null;
+        let yamlLoadError = null;
+
+        const appState = {
+            currentQuestion: null,
+            history: [],
+            // Gesammelte Eingaben für evaluateRules()
+            collected: {
+                specialCases: [],           // IDs aus sonderfaelle
+                sectorCategory: null,       // 'anlage1' oder 'anlage2'
+                enterpriseSize: null       // 'small', 'medium', 'large'
+            }
+        };
+
+        // ============================================
+        // 2. FRAGEN-FLUSS (Linear, mit Branches)
+        // ============================================
+
+        const questions = {
+            // Q0: Start - Entscheidung: KRITIS?
+            q0: {
+                id: 'q0',
+                number: 1,
+                text: 'Betreibt Ihr Unternehmen KRITIS-Anlagen?',
+                info: 'Gemeint sind Anlagen im Sinne der KRITIS-Dachverordnung (§28 Abs. 1 Nr. 1). Beispiele: Kernkraftwerke, Wasserkraftwerke, Wasserwerke, kritische Verkehrsinfrastruktur.',
+                yesAction: { type: 'result', result: 'bwe_kritis' },
+                noAction: { type: 'question', next: 'q1' },
+                onYes: () => {
+                    appState.collected.specialCases.push('kritis_betreiber');
+                }
+            },
+
+            // Q1: Sonderfälle
+            q1: {
+                id: 'q1',
+                number: 2,
+                text: 'Ist Ihr Unternehmen einer dieser Sonderfälle?',
+                info: 'Wählen Sie "Ja", falls zutreffend. Die folgenden Typen sind immer bwE, unabhängig von der Unternehmensgröße: <strong>Qualifizierte Vertrauensdiensteanbieter (eIDAS)</strong>, <strong>TLD-Registries</strong>, <strong>DNS-Diensteanbieter</strong> oder <strong>Öffentliche Telekommunikation</strong>.',
+                yesAction: { type: 'question', next: 'q1a' },
+                noAction: { type: 'question', next: 'q2' }
+            },
+
+            // Q1a: Welche Sonderfälle?
+            q1a: {
+                id: 'q1a',
+                number: 2,
+                text: 'Welche der folgenden Sonderfälle treffen auf Sie zu? (Mehrfachauswahl möglich)',
+                info: '<strong>Was bedeuten diese Kategorien?</strong><br>• <strong>Vertrauensdiensteanbieter:</strong> Unternehmen, die digitale Signaturen, Zeitstempel oder Authentifizierungszertifikate ausstellen (eIDAS-Verordnung)<br>• <strong>TLD-Registries:</strong> Betreiber von Top-Level-Domains wie .de, .eu oder andere Länderdomains<br>• <strong>DNS-Diensteanbieter:</strong> Unternehmen, die DNS-Resolver oder DNS-Hostingdienste für andere betreiben<br>• <strong>Öffentliche Telekommunikation:</strong> Mobilfunk- und Festnetzbetreiber sowie ihre Dienstanbieter (z.B. Telekom, Vodafone, O2)',
+                options: [
+                    { id: 'qualifizierte_vertrauensdienste', label: 'Qualifizierte Vertrauensdiensteanbieter (eIDAS)', value: 'qvda' },
+                    { id: 'tld_registry', label: 'TLD-Registry-Betreiber (.de, .eu, etc.)', value: 'tld' },
+                    { id: 'dns_dienst', label: 'DNS-Diensteanbieter', value: 'dns' },
+                    { id: 'telekommunikation', label: 'Öffentliche Telekommunikation (Netzbetreiber)', value: 'tk' }
+                ],
+                yesAction: { type: 'question', next: 'q1b' },
+                noAction: { type: 'question', next: 'q2' },
+                multiSelect: true
+            },
+
+            // Q1b: Falls TK ausgewählt → Größe? Sonst → Q2
+            q1b: {
+                id: 'q1b',
+                number: 3,
+                text: 'Falls Sie Telekommunikation ausgewählt haben: Wie groß ist Ihr Unternehmen?',
+                info: 'Dies ist nur relevant, falls Sie öffentliche Telekommunikationsdienste betreiben. TK-Anbieter werden ab mittlerer Größe (≥50 Mitarbeiter) zu bwE. Andere Sonderfälle sind unabhängig von der Größe bwE.',
+                options: [
+                    { value: 'small', label: 'Klein (<50 MA, ≤10M€)' },
+                    { value: 'medium', label: 'Mittel (50-249 MA)' },
+                    { value: 'large', label: 'Groß (≥250 MA oder >50M€)' }
+                ],
+                yesAction: { type: 'question', next: 'q2_sf' },
+                noAction: { type: 'question', next: 'q2_sf' }
+            },
+
+            // Q2_SF: Nach Sonderfällen → zu Q2 oder direkt evaluieren?
+            q2_sf: {
+                id: 'q2_sf',
+                number: 4,
+                text: 'Sind Sie auch in einem regulierten Sektor tätig?',
+                info: 'Falls Ihre Sonderfallkategorie nicht ausreicht, können Sie auch als Anlage 1/2-Unternehmen betroffen sein. Wenn Sie nur Sonderfälle betreiben, wählen Sie "Nein".',
+                yesAction: { type: 'question', next: 'q2' },
+                noAction: { type: 'result', result: 'evaluate_rules' }
+            },
+
+            // Q2: Sektor
+            q2: {
+                id: 'q2',
+                number: 3,
+                text: 'In welchem Sektor ist Ihr Unternehmen tätig?',
+                info: 'Wählen Sie den hauptsächlichen Wirtschaftssektor. Wenn Sie in mehreren tätig sind, wählen Sie bitte den kritischeren oder höher regulierten Sektor.',
+                options: [
+                    { value: 'anlage1', label: 'Anlage 1 – Sektoren mit hoher Kritikalität', infoId: 'anlage1-info' },
+                    { value: 'anlage2', label: 'Anlage 2 – Sonstige kritische Sektoren', infoId: 'anlage2-info' },
+                    { value: 'neither', label: 'Keiner dieser Sektoren' }
+                ],
+                yesAction: { type: 'question', next: 'q3' },
+                noAction: { type: 'result', result: 'nicht_betroffen' }
+            },
+
+            // Q3: Größe (bestimmt bwE vs wE)
+            q3: {
+                id: 'q3',
+                number: 4,
+                text: 'Wie groß ist Ihr Unternehmen?',
+                info: 'Bitte beachten Sie die EU-KMU-Definition:',
+                options: [
+                    {
+                        value: 'small',
+                        label: 'Klein (<50 MA, ≤10M€ Umsatz, ≤10M€ Bilanz)'
+                    },
+                    {
+                        value: 'medium',
+                        label: 'Mittel (50-249 MA, >10M€ Umsatz UND Bilanz, ≤50M€ Umsatz)'
+                    },
+                    {
+                        value: 'large',
+                        label: 'Groß (≥250 MA oder >50M€ Umsatz UND >43M€ Bilanz)'
+                    }
+                ],
+                yesAction: { type: 'result', result: 'evaluate_rules' },
+                noAction: { type: 'result', result: 'nicht_betroffen' }
+            }
+        };
+
+        // ============================================
+        // 3. REGEL-ENGINE IMPLEMENTATION
+        // ============================================
+
+        async function loadYAMLData() {
+            try {
+                // Lade anlage.yaml
+                const anlagenResponse = await fetch('anlage.yaml');
+                if (!anlagenResponse.ok) {
+                    throw new Error(`anlage.yaml konnte nicht geladen werden (${anlagenResponse.status})`);
+                }
+                const anlagenYaml = await anlagenResponse.text();
+                anlagenData = jsyaml.load(anlagenYaml);
+
+                // Neue Struktur: direkt root level (kein nis2_bsig wrapper)
+                if (!anlagenData || !anlagenData.anlage1 || !anlagenData.anlage2) {
+                    throw new Error('anlage.yaml: Erforderliche Sektionen "anlage1" und "anlage2" fehlen');
+                }
+
+                // Validiere Override-Struktur (neu)
+                if (anlagenData.override && !anlagenData.override.enabled !== undefined) {
+                    console.warn('⚠️ override.enabled nicht definiert');
+                }
+
+                // Validiere Telekommunikation (neu mit turnover/balance)
+                if (anlagenData.telekommunikation && !anlagenData.telekommunikation.thresholds) {
+                    throw new Error('anlage.yaml: telekommunikation.thresholds fehlt');
+                }
+
+                // Lade regeln.yaml
+                const regelnResponse = await fetch('regeln.yaml');
+                if (!regelnResponse.ok) {
+                    throw new Error(`regeln.yaml konnte nicht geladen werden (${regelnResponse.status})`);
+                }
+                const regelnYaml = await regelnResponse.text();
+                const parsedRegeln = jsyaml.load(regelnYaml);
+
+                if (!parsedRegeln || !Array.isArray(parsedRegeln.rules)) {
+                    throw new Error('regeln.yaml: Erforderliche Struktur "rules" (Array) fehlt');
+                }
+
+                // Validiere Regel-Struktur (mit neuen Feldern)
+                for (let i = 0; i < parsedRegeln.rules.length; i++) {
+                    const rule = parsedRegeln.rules[i];
+                    if (!rule.id || rule.priority === undefined) {
+                        throw new Error(`regeln.yaml[${i}]: Erforderliche Felder fehlen (id, priority)`);
+                    }
+                    // Result kann fehlen bei Override-Typ
+                    if (rule.type !== 'override' && !rule.result) {
+                        throw new Error(`regeln.yaml[${i}]: result erforderlich (außer bei override)`);
+                    }
+                }
+
+                regelnData = parsedRegeln;
+                console.log('✅ YAML-Daten erfolgreich geladen und validiert');
+            } catch (error) {
+                console.error('❌ KRITISCH – Fehler beim Laden der YAML-Daten:', error);
+                yamlLoadError = error.message;
+            }
+        }
+
+        function evaluateRules() {
+            /**
+             * Evaluiert Regeln nach Priorität (neue Struktur mit Umsatz/Bilanz)
+             * 
+             * Input: appState.collected
+             * - specialCases: Array von Sonderfalls-IDs
+             * - sectorCategory: 'anlage1' | 'anlage2' | null
+             * - enterpriseSize: 'small' | 'medium' | 'large'
+             * - employees: Zahl (optional)
+             * - turnover: Zahl in € (optional)
+             * - balance: Zahl in € (optional)
+             * 
+             * Output: { result: 'bwe'|'we'|'nicht_betroffen', appliedRule: id, explanation: string, legal_ref: string }
+             */
+
+            if (yamlLoadError) {
+                console.error('❌ KRITISCH: YAML-Ladefehler vorhanden');
+                return {
+                    result: 'error',
+                    isError: true,
+                    appliedRule: null,
+                    explanation: `Systemfehler: ${yamlLoadError}. Die Prüfung konnte nicht durchgeführt werden. Bitte versuchen Sie es später erneut.`
+                };
+            }
+
+            if (!regelnData || !regelnData.rules) {
+                console.error('❌ KRITISCH: Regelwerk nicht geladen');
+                return {
+                    result: 'error',
+                    isError: true,
+                    appliedRule: null,
+                    explanation: 'Systemfehler: Das Regelwerk konnte nicht geladen werden. Bitte versuchen Sie es später erneut.'
+                };
+            }
+
+            console.log('evaluateRules() mit Input:', appState.collected);
+
+            // Sortiere Regeln nach Priorität (aufsteigend)
+            const sortedRules = [...regelnData.rules].sort((a, b) =>
+                (a.priority || 999) - (b.priority || 999)
+            );
+
+            console.log('Sorted Rules:', sortedRules.map(r => ({ id: r.id, priority: r.priority, type: r.type })));
+
+            // Durchsuche Regeln in Prioritätsreihenfolge
+            for (const rule of sortedRules) {
+                console.log(`Prüfe Regel: ${rule.id} (type: ${rule.type})`);
+
+                let matched = false;
+
+                // 1. OVERRIDE (Behördliche Einstufung)
+                if (rule.type === 'override') {
+                    // Skip – wird nicht automatisch evaluiert
+                    continue;
+                }
+
+                // 2. KRITIS-Betreiber
+                if (rule.type === 'category_match' && rule.category === 'kritis') {
+                    matched = appState.collected.specialCases.includes('kritis_betreiber');
+                    if (matched) {
+                        console.log(`✓ KRITIS greift: ${rule.id}`);
+                        return { result: rule.result, appliedRule: rule.id, legal_ref: rule.legal_ref };
+                    }
+                    continue;
+                }
+
+                // 3. Sonderfälle (QVD, TLD, DNS)
+                if (rule.type === 'category_match' && ['qualifizierte_vertrauensdienste', 'tld_registry', 'dns_dienst'].includes(rule.category)) {
+                    matched = appState.collected.specialCases.includes(rule.category);
+                    if (matched) {
+                        console.log(`✓ Sonderfall greift: ${rule.id}`);
+                        return { result: rule.result, appliedRule: rule.id, legal_ref: rule.legal_ref };
+                    }
+                    continue;
+                }
+
+                // 4. Telekommunikation mit Schwellenwertprüfung (Umsatz/Bilanz)
+                if (rule.conditions && rule.conditions.some(c => c.type === 'category_match' && c.category === 'telekommunikation')) {
+                    if (!appState.collected.specialCases.includes('telekommunikation')) {
+                        continue;
+                    }
+
+                    // Prüfe alle Schwellenwert-Bedingungen
+                    let thresholdMet = checkThresholds(rule.conditions, appState.collected);
+                    if (thresholdMet) {
+                        console.log(`✓ Telekommunikation-Regel greift: ${rule.id}`);
+                        return { result: rule.result, appliedRule: rule.id, legal_ref: rule.legal_ref };
+                    }
+                    continue;
+                }
+
+                // 5. ABS2-Kategorien (immer wE, größenunabhängig)
+                if (rule.type === 'category_group_match' && rule.group === 'abs2_kategorien') {
+                    if (anlagenData.abs2_kategorien && anlagenData.abs2_kategorien.categories) {
+                        const abs2Ids = anlagenData.abs2_kategorien.categories.map(c => c.id);
+                        matched = appState.collected.specialCases.some(sc => abs2Ids.includes(sc));
+                        if (matched) {
+                            console.log(`✓ ABS2-Kategorie greift: ${rule.id}`);
+                            return { result: rule.result, appliedRule: rule.id, legal_ref: rule.legal_ref };
+                        }
+                    }
+                    continue;
+                }
+
+                // 6. Anlage 1 (mit Größenprüfung)
+                if (rule.conditions && rule.conditions.some(c => c.type === 'sector_category' && c.category === 'anlage1')) {
+                    if (appState.collected.sectorCategory !== 'anlage1') {
+                        continue;
+                    }
+
+                    let thresholdMet = checkThresholds(rule.conditions, appState.collected);
+                    if (thresholdMet) {
+                        console.log(`✓ Anlage 1 Regel greift: ${rule.id}`);
+                        return { result: rule.result, appliedRule: rule.id, legal_ref: rule.legal_ref };
+                    }
+                    continue;
+                }
+
+                // 7. Anlage 2 (mit Größenprüfung)
+                if (rule.conditions && rule.conditions.some(c => c.type === 'sector_category' && c.category === 'anlage2')) {
+                    if (appState.collected.sectorCategory !== 'anlage2') {
+                        continue;
+                    }
+
+                    let thresholdMet = checkThresholds(rule.conditions, appState.collected);
+                    if (thresholdMet) {
+                        console.log(`✓ Anlage 2 Regel greift: ${rule.id}`);
+                        return { result: rule.result, appliedRule: rule.id, legal_ref: rule.legal_ref };
+                    }
+                    continue;
+                }
+
+                // 999. Fallback
+                if (rule.id === 'fallback') {
+                    console.log('Fallback zu nicht_betroffen');
+                    return { result: rule.result, appliedRule: rule.id, explanation: rule.explanation };
+                }
+            }
+
+            // Absolute Fallback (sollte nicht vorkommen)
+            console.log('Keine Regel greift – Fallback zu nicht_betroffen');
+            return {
+                result: 'nicht_betroffen',
+                appliedRule: 'fallback',
+                explanation: 'Keine Regel greift – nicht betroffen'
+            };
+        }
+
+        function checkThresholds(conditions, collected) {
+            /**
+             * Prüft ob Schwellenwerte erfüllt sind
+             * Unterstützt: threshold_all_met, threshold_range, threshold_not_met, threshold_any_met
+             */
+            for (const condition of conditions) {
+                if (condition.type === 'threshold_all_met') {
+                    // Alle Schwellen müssen erfüllt sein
+                    if (condition.thresholds.employees_min && collected.employees < condition.thresholds.employees_min) return false;
+                    if (condition.thresholds.turnover_min && collected.turnover < condition.thresholds.turnover_min) return false;
+                    if (condition.thresholds.balance_min && collected.balance < condition.thresholds.balance_min) return false;
+                }
+                if (condition.type === 'threshold_range') {
+                    // In Größenbereich
+                    if (condition.employees_min && collected.employees < condition.employees_min) return false;
+                    if (condition.employees_max && collected.employees > condition.employees_max) return false;
+                }
+                if (condition.type === 'threshold_any_met') {
+                    // Mindestens eine Schwelle erfüllt
+                    const anyMet = 
+                        (condition.thresholds.employees_min && collected.employees >= condition.thresholds.employees_min) ||
+                        (condition.thresholds.turnover_min && collected.turnover >= condition.thresholds.turnover_min) ||
+                        (condition.thresholds.balance_min && collected.balance >= condition.thresholds.balance_min);
+                    if (!anyMet) return false;
+                }
+                if (condition.type === 'threshold_not_met') {
+                    // Schwellen nicht erfüllt (inverse)
+                    const met = 
+                        (condition.thresholds.employees_min && collected.employees >= condition.thresholds.employees_min) ||
+                        (condition.thresholds.turnover_min && collected.turnover >= condition.thresholds.turnover_min) ||
+                        (condition.thresholds.balance_min && collected.balance >= condition.thresholds.balance_min);
+                    if (met) return false;
+                }
+            }
+            return true;
+        }
+
+        // ============================================
+        // 4. ERGEBNIS-TEMPLATES
+        // ============================================
+
+        const resultTemplates = {
+            bwe_kritis: {
+                title: 'KRITIS-Betreiber',
+                badge: 'Besonders wichtige Einrichtung (bwE)',
+                badgeClass: 'badge-bwe',
+                icon: '🔴',
+                description: 'Ihr Unternehmen betreibt KRITIS-Anlagen und fällt daher unter die strengsten Anforderungen des NIS-2-Umsetzungsgesetzes.',
+                obligations: [
+                    'Registrierungspflicht beim BSI',
+                    'Umfassendes Risikomanagement (§30)',
+                    'Schnellmeldung von Vorfällen in 24h (§32)',
+                    'Detailbericht in 72h (§32)',
+                    'Regelmäßige Sicherheitsaudits (§35)',
+                    'Schulung der Leitungsebene (§38)',
+                    'Notfall- und Betriebsfortführungsplanung'
+                ]
+            },
+
+            bwe: {
+                title: 'Besonders wichtige Einrichtung (bwE)',
+                badge: 'bwE nach §28 Abs. 1 Nr. 2-6 BSIG',
+                badgeClass: 'badge-bwe',
+                icon: '🔴',
+                description: 'Basierend auf Ihren Antworten ist Ihr Unternehmen eine <strong>besonders wichtige Einrichtung</strong> im Sinne des BSIG. Ihnen gelten die strengsten Anforderungen des NIS-2-Umsetzungsgesetzes.',
+                obligations: [
+                    'Registrierungspflicht beim BSI-Portal',
+                    'Umfassendes Risikomanagement gemäß §30',
+                    'Meldepflicht: 24h Frühwarnung, 72h Detailbericht (§32)',
+                    'Regelmäßige Sicherheitsaudits durch neutrale Stellen (§35)',
+                    'Beherrschung von Lieferketten-Risiken',
+                    'Notfall- und Betriebsfortführungsplanung',
+                    'Schulung und Sensibilisierung der Leitungsebene (§38)',
+                    'Dokumentation aller Maßnahmen'
+                ],
+                additionalInfo: 'Als bwE unterliegen Sie intensiven Überwachungsmechanismen durch das BSI. Wir empfehlen, umgehend ein NIS-2-Compliance-Projekt zu starten und einen Sicherheitsbeauftragten zu benennen.'
+            },
+
+            we: {
+                title: 'Wichtige Einrichtung (wE)',
+                badge: 'wE nach §28 Abs. 2 BSIG',
+                badgeClass: 'badge-we',
+                icon: '🟠',
+                description: 'Ihr Unternehmen ist eine <strong>wichtige Einrichtung</strong> nach BSIG §28 Abs. 2. Sie unterliegen NIS-2-Anforderungen, jedoch mit reduziertem Umfang gegenüber bwE-Einrichtungen.',
+                obligations: [
+                    'Registrierungspflicht beim BSI-Portal',
+                    'Angemessenes Risikomanagement gemäß §30',
+                    'Meldung erheblicher Sicherheitsvorfälle (§32)',
+                    'Dokumentation der IT-Sicherheitsmaßnahmen',
+                    'Schulung der Leitungsebene (§38)',
+                    'Periodische Sicherheitsaudits'
+                ],
+                additionalInfo: 'Als wE benötigen Sie eine strukturierte IT-Sicherheitsstrategie, müssen aber nicht die maximalen Anforderungen von bwE erfüllen. Planen Sie ein NIS-2-Umsetzungsprojekt für 2025.'
+            },
+
+            nicht_betroffen: {
+                title: 'Nicht von NIS-2 betroffen',
+                badge: 'Nicht unter §28 BSIG',
+                badgeClass: 'badge-nicht-betroffen',
+                icon: '✓',
+                description: 'Basierend auf Ihren Antworten fällt Ihr Unternehmen <strong>nicht unter §28 BSIG</strong> (NIS-2-Umsetzungsgesetz).',
+                obligations: [
+                    'Keine Registrierungspflicht beim BSI',
+                    'Keine NIS-2-spezifischen Meldepflichten',
+                    'Allgemeine Sorgfaltspflichten (Mindeststandards) nach §26 weiterhin relevant'
+                ],
+                additionalInfo: 'Auch wenn Sie nicht von NIS-2 betroffen sind, sollten Sie grundlegende IT-Sicherheitsmaßnahmen implementieren. Cyber-Angriffe können jedes Unternehmen treffen. Überprüfen Sie regelmäßig, ob sich Ihre Einstufung durch Größenwachstum oder Branchenwechsel ändert.'
+            }
+        };
+
+        // ============================================
+        // 5. UI-FUNKTIONEN
+        // ============================================
+
+        const contentCard = document.getElementById('content-card');
+        const progressContainer = document.getElementById('progress-container');
+        const progressText = document.getElementById('progress-text');
+        const progressFill = document.getElementById('progress-fill');
+
+        function updateProgress() {
+            const progress = Math.min((appState.history.length / Object.keys(questions).length) * 100, 100);
+            progressFill.style.width = `${progress}%`;
+            progressText.textContent = `Frage ${appState.history.length + 1}`;
+        }
+
+        function getSectorInfoContent(sectorType) {
+            // Neu: Dynamisches Laden aus anlagenData (YAML)
+            if (!anlagenData) {
+                console.warn('⚠️ anlagenData nicht geladen, fallback zu hardcoded');
+                return getHardcodedSectorInfo(sectorType);
+            }
+
+            if (sectorType === 'anlage1' && anlagenData.anlage1 && anlagenData.anlage1.sectors) {
+                return anlagenData.anlage1.sectors.map((sector, idx) => `
+                    <div class="sector-item">
+                        <div class="sector-item-title">${idx + 1}. ${sector.name}</div>
+                        <div class="sector-item-detail">${sector.einrichtungsarten ? sector.einrichtungsarten.join(', ') : ''}</div>
+                    </div>
+                `).join('');
+            } else if (sectorType === 'anlage2' && anlagenData.anlage2 && anlagenData.anlage2.sectors) {
+                return anlagenData.anlage2.sectors.map((sector, idx) => `
+                    <div class="sector-item">
+                        <div class="sector-item-title">${idx + 1}. ${sector.name}</div>
+                        <div class="sector-item-detail">${sector.einrichtungsarten ? sector.einrichtungsarten.join(', ') : ''}</div>
+                    </div>
+                `).join('');
+            }
+
+            return getHardcodedSectorInfo(sectorType);
+        }
+
+        function getHardcodedSectorInfo(sectorType) {
+            // Fallback zu hardcoded (für Fehlerfall)
+            if (sectorType === 'anlage1') {
+                return `
+                    <div class="sector-item">
+                        <div class="sector-item-title">1. Energieversorgung</div>
+                        <div class="sector-item-detail">Stromerzeugung, Stromnetzbetreiber, Gas, Fernwärme, Wasserstoff</div>
+                    </div>
+                    <div class="sector-item">
+                        <div class="sector-item-title">2. Verkehr & Transport</div>
+                        <div class="sector-item-detail">Luftfahrt, Schienenverkehr, Seeschifffahrt, Binnenschifffahrt, Straßenverkehr</div>
+                    </div>
+                    <div class="sector-item">
+                        <div class="sector-item-title">3. Gesundheit</div>
+                        <div class="sector-item-detail">Krankenhäuser, Labore, Versorgungsdienste</div>
+                    </div>
+                    <div class="sector-item">
+                        <div class="sector-item-title">4. Digitale Infrastruktur</div>
+                        <div class="sector-item-detail">IXP, DNS, TLD-Registry, Cloud, Rechenzentren, CDN, Vertrauensdienste, TK-Netze</div>
+                    </div>
+                    <div class="sector-item">
+                        <div class="sector-item-title">5. Wasser & Abwasser</div>
+                        <div class="sector-item-detail">Trinkwasser, Wasseraufbereitung, Abwasserbeseitigung</div>
+                    </div>
+                `;
+            } else if (sectorType === 'anlage2') {
+                return `
+                    <div class="sector-item">
+                        <div class="sector-item-title">1. Post & Kurier</div>
+                        <div class="sector-item-detail">Postdienste, Kurierdienste</div>
+                    </div>
+                    <div class="sector-item">
+                        <div class="sector-item-title">2. Abfallwirtschaft</div>
+                        <div class="sector-item-detail">Abfallbehandlung, Abfallsammlung</div>
+                    </div>
+                    <div class="sector-item">
+                        <div class="sector-item-title">3. Chemie</div>
+                        <div class="sector-item-detail">Hersteller, Importeure</div>
+                    </div>
+                    <div class="sector-item">
+                        <div class="sector-item-title">4. Produktion</div>
+                        <div class="sector-item-detail">Maschinenbau, Elektronik, Materialproduktion</div>
+                    </div>
+                `;
+            }
+            return '';
+        }
+
+        function toggleSectorInfo(event, infoId) {
+            event.stopPropagation();
+            const element = document.getElementById(infoId);
+            if (element) {
+                element.classList.toggle('collapsed');
+            }
+        }
+
+        function showQuestion(questionId) {
+            const question = questions[questionId];
+            if (!question) {
+                console.error('Frage nicht gefunden:', questionId);
+                return;
+            }
+
+            appState.currentQuestion = question;
+            progressContainer.style.display = 'block';
+            updateProgress();
+
+            // History anzeigen
+            let historyHtml = '';
+            if (appState.history.length > 0) {
+                historyHtml = `
+                    <div class="history-container">
+                        <div class="history-title">Ihre bisherigen Antworten:</div>
+                        ${appState.history.map(h => `
+                            <div class="history-item">
+                                <span>${h.questionText.substring(0, 60)}${h.questionText.length > 60 ? '...' : ''}</span>
+                                <span class="answer ${h.answerClass}">
+                                    ${h.answerDisplay}
+                                </span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            // Button-Rendering basierend auf Frage-Typ
+            let buttonHtml = '';
+            if (question.options) {
+                // Multiple Choice
+                if (question.multiSelect) {
+                    buttonHtml = `
+                        <div id="multiselect-container">
+                            ${question.options.map(opt => `
+                                <div style="margin-bottom: 10px;">
+                                    <label>
+                                        <input type="checkbox" value="${opt.id}" data-label="${opt.label}">
+                                        ${opt.label}
+                                    </label>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="button-container">
+                            <button class="btn btn-yes" onclick="answerMultiSelect()">✓ Bestätigen</button>
+                        </div>
+                    `;
+                } else {
+                    // Single Select
+                    buttonHtml = `
+                        <div id="select-container" style="display: flex; flex-direction: column; gap: 0;">
+                            ${question.options.map(opt => {
+                                const infoContent = getSectorInfoContent(opt.value);
+                                const hasInfo = opt.infoId && infoContent;
+                                const infoHtml = hasInfo ? `
+                                    <span class="sector-info-label">Sektoren in dieser Anlage:</span>
+                                    <div class="sector-info-toggle collapsed" id="${opt.infoId}" onclick="toggleSectorInfo(event, '${opt.infoId}')">
+                                        <div class="sector-info-header">
+                                            <span>Welche Sektoren gehören hier dazu?</span>
+                                        </div>
+                                        <div class="sector-info-content">
+                                            <div class="sector-list">
+                                                ${infoContent}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ` : '';
+                                return `
+                                    <div class="sector-option-group">
+                                        <button class="btn sector-option-button" style="background: var(--dsn-accent); color: white;" 
+                                            onclick="answerQuestion('${opt.value}', '${opt.label}')">
+                                            ${opt.label}
+                                        </button>
+                                        ${infoHtml}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                }
+            } else {
+                // Ja/Nein
+                buttonHtml = `
+                    <div class="button-container">
+                        <button class="btn btn-yes" onclick="answerQuestion('ja', 'Ja')">✓ Ja</button>
+                        <button class="btn btn-no" onclick="answerQuestion('nein', 'Nein')">✗ Nein</button>
+                    </div>
+                `;
+            }
+
+            contentCard.innerHTML = `
+                <span class="question-number">Frage ${question.number}</span>
+                <p class="question-text">${question.text}</p>
+                ${question.info ? `<div class="info-box">${question.info}</div>` : ''}
+                ${buttonHtml}
+                ${historyHtml}
+                ${appState.history.length > 0 ? `
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button class="btn btn-back" onclick="goBack()">← Zurück</button>
+                    </div>
+                ` : ''}
+            `;
+        }
+
+        function answerQuestion(answer, answerLabel = '') {
+            if (!appState.currentQuestion) return;
+
+            // Speichere Antwort in History
+            appState.history.push({
+                questionId: appState.currentQuestion.id,
+                questionText: appState.currentQuestion.text,
+                answer: answer,
+                answerDisplay: answerLabel || answer.toUpperCase(),
+                answerClass: answer === 'ja' ? 'answer-yes' : answer === 'nein' ? 'answer-no' : 'answer-uncertain'
+            });
+
+            // Sammle Daten für Rule Engine basierend auf Frage-ID
+            const qId = appState.currentQuestion.id;
+
+            // Größenfragen (Q1b, Q3)
+            if (qId === 'q1b' || qId === 'q3') {
+                appState.collected.enterpriseSize = answer; // 'small', 'medium', 'large'
+            }
+
+            // Sektor-Auswahl (Q2)
+            if (qId === 'q2') {
+                if (answer === 'anlage1') {
+                    appState.collected.sectorCategory = 'anlage1';
+                } else if (answer === 'anlage2') {
+                    appState.collected.sectorCategory = 'anlage2';
+                } else {
+                    appState.collected.sectorCategory = null;
+                }
+            }
+
+            // Nächste Aktion bestimmen
+            let action;
+            if (answer === 'ja') {
+                // Callback für Ja-Antworten (z.B. Q0 KRITIS)
+                if (appState.currentQuestion.onYes) {
+                    appState.currentQuestion.onYes();
+                }
+                action = appState.currentQuestion.yesAction;
+            } else if (answer === 'nein') {
+                // Callback für Nein-Antworten
+                if (appState.currentQuestion.onNo) {
+                    appState.currentQuestion.onNo();
+                }
+                action = appState.currentQuestion.noAction;
+            } else {
+                // Für andere Werte (z.B. Größe-Optionen) immer yesAction nutzen
+                action = appState.currentQuestion.yesAction;
+            }
+
+            if (!action) {
+                console.error('Keine Aktion definiert');
+                return;
+            }
+
+            if (action.type === 'result') {
+                if (action.result === 'evaluate_rules') {
+                    const evaluation = evaluateRules();
+                    showResult(evaluation);
+                } else {
+                    showResult(action.result);
+                }
+            } else if (action.type === 'question') {
+                showQuestion(action.next);
+            }
+        }
+
+        function answerMultiSelect() {
+            const container = document.getElementById('multiselect-container');
+            const checkboxes = container.querySelectorAll('input[type="checkbox"]:checked');
+            const selected = Array.from(checkboxes).map(cb => ({
+                id: cb.value,
+                label: cb.getAttribute('data-label')
+            }));
+
+            if (selected.length === 0) {
+                alert('Bitte wählen Sie mindestens eine Option.');
+                return;
+            }
+
+            // Sammle Sonderfälle
+            appState.collected.specialCases = selected.map(s => s.id);
+
+            // Speichere in History
+            appState.history.push({
+                questionId: appState.currentQuestion.id,
+                questionText: appState.currentQuestion.text,
+                answer: selected.map(s => s.label).join(', '),
+                answerDisplay: selected.length + ' ausgewählt',
+                answerClass: 'answer-yes'
+            });
+
+            // Nächste Aktion
+            const action = appState.currentQuestion.yesAction;
+            if (action.type === 'question') {
+                showQuestion(action.next);
+            }
+        }
+
+        function goBack() {
+            if (appState.history.length === 0) return;
+            
+            // Letzter Eintrag aus History entfernen
+            const lastEntry = appState.history.pop();
+            
+            // Wenn noch Einträge in History, zur vorherigen Frage gehen
+            if (appState.history.length > 0) {
+                const previousEntry = appState.history[appState.history.length - 1];
+                showQuestion(previousEntry.questionId);
+            } else {
+                // Wenn kein Eintrag mehr, von vorne anfangen
+                startAssessment();
+            }
+        }
+
+        function showResult(result) {
+            progressContainer.style.display = 'none';
+
+            let template;
+            let resultType = 'bwe';
+
+            if (typeof result === 'string') {
+                // Direkter Template-Key (z.B. 'bwe_kritis', 'nicht_betroffen')
+                template = resultTemplates[result];
+                resultType = result;
+            } else {
+                // Evaluation-Objekt
+                const evaluation = result;
+
+                // FEHLERBEHANDLUNG: Systemfehler
+                if (evaluation.isError) {
+                    contentCard.innerHTML = `
+                        <div style="text-align: center; padding: 40px; background: #fee; border: 2px solid #c33; border-radius: 8px;">
+                            <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
+                            <h2 style="color: #c33; margin-bottom: 16px; font-size: 1.5rem;">Systemfehler</h2>
+                            <p style="color: #666; font-size: 1rem; line-height: 1.6; margin-bottom: 24px;">
+                                ${evaluation.explanation}
+                            </p>
+                            <p style="color: #999; font-size: 0.9rem;">
+                                <strong>Fehler-ID:</strong> ${evaluation.appliedRule || 'unknown'}<br>
+                                <strong>Kontakt:</strong> support@dsn.de oder 030-xxx-xxxxx
+                            </p>
+                            <button class="btn btn-restart" onclick="showStartScreen()" style="margin-top: 24px;">
+                                ← Zurück zur Startseite
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                if (evaluation.result === 'bwe') {
+                    template = resultTemplates.bwe;
+                    resultType = 'bwe';
+                } else if (evaluation.result === 'we') {
+                    template = resultTemplates.we;
+                    resultType = 'we';
+                } else {
+                    template = resultTemplates.nicht_betroffen;
+                    resultType = 'nicht_betroffen';
+                }
+                // Speichere Evaluation-Details
+                template.appliedRule = evaluation.appliedRule;
+                template.legal_ref = evaluation.legal_ref;
+                template.explanation = evaluation.explanation;
+            }
+
+            const additionalInfoHtml = template.additionalInfo ? `
+                <p style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 8px; color: #856404;">
+                    ℹ️ ${template.additionalInfo}
+                </p>
+            ` : '';
+
+            const legalRefHtml = template.legal_ref ? `
+                <div class="legal-ref">
+                    <strong>Rechtliche Grundlage:</strong> ${template.legal_ref}
+                </div>
+            ` : '';
+
+            const resultClass = resultType === 'bwe' ? 'result-bwe' : resultType === 'we' ? 'result-we' : 'result-nicht-betroffen';
+
+            contentCard.innerHTML = `
+                <div class="result-card ${resultClass}">
+                    <div class="result-icon">${template.icon}</div>
+                    <span class="result-badge ${template.badgeClass}">${template.badge}</span>
+                    <h2 class="result-title">${template.title}</h2>
+                    <p class="result-description">${template.description}</p>
+
+                    <div class="info-list">
+                        <h4>${resultType === 'nicht_betroffen' ? 'Das bedeutet für Sie:' : 'Ihre Verpflichtungen:'}</h4>
+                        <ul>
+                            ${template.obligations.map(o => `<li>${o}</li>`).join('')}
+                        </ul>
+                    </div>
+
+                    ${legalRefHtml}
+                    ${additionalInfoHtml}
+
+                    <div class="history-container">
+                        <div class="history-title">Ihre Antworten im Überblick:</div>
+                        ${appState.history.map(h => `
+                            <div class="history-item">
+                                <span>${h.questionText.substring(0, 50)}${h.questionText.length > 50 ? '...' : ''}</span>
+                                <span class="answer ${h.answerClass}">${h.answerDisplay}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <button class="btn btn-restart" onclick="startAssessment()">
+                        🔄 Neue Prüfung starten
+                    </button>
+
+                    <p style="margin-top: 25px; font-size: 0.85rem; color: #888;">
+                        <strong>Hinweis:</strong> Diese Prüfung dient nur zur Orientierung und ersetzt keine Rechtsberatung. 
+                        Bei Unsicherheiten wenden Sie sich bitte an einen Fachexperten oder das BSI (nis2@bsi.bund.de).
+                    </p>
+                </div>
+            `;
+        }
+
+        function startAssessment() {
+            appState.history = [];
+            appState.collected = {
+                specialCases: [],
+                sectorCategory: null,
+                facilityIds: [],
+                enterpriseSize: null
+            };
+            showQuestion('q0');
+        }
+
+        function showStartScreen() {
+            progressContainer.style.display = 'none';
+            contentCard.innerHTML = `
+                <div class="start-screen">
+                    <h2>NIS-2-Betroffenheitsprüfung</h2>
+                    <p>
+                        Mit diesem interaktiven Tool können Sie prüfen, ob Ihr Unternehmen gemäß 
+                        <strong>§28 BSIG</strong> vom NIS-2-Umsetzungsgesetz betroffen ist.
+                    </p>
+                    <p>
+                        Das Gesetz ist seit dem <strong>6. Dezember 2025</strong> in Kraft und betrifft ca. 29.500 Unternehmen in Deutschland.
+                    </p>
+
+                    <div class="category-info">
+                        <div class="category-item bwe">
+                            <h4>bwE</h4>
+                            <p>§28 Abs. 1 – Strengste Anforderungen</p>
+                        </div>
+                        <div class="category-item we">
+                            <h4>wE</h4>
+                            <p>§28 Abs. 2 – Mittlere Anforderungen</p>
+                        </div>
+                    </div>
+
+                    <p style="margin-top: 20px; text-align: left;">
+                        <strong>Erfasst werden:</strong><br>
+                        • KRITIS-Betreiber<br>
+                        • Qualifizierte Vertrauensdienste, TLD-Registries, DNS-Betreiber<br>
+                        • Große Unternehmen in Anlage 1 (Energie, Transport, Finanzwesen, Gesundheit, Wasser, Digital, Weltraum)<br>
+                        • Mittlere Unternehmen in Anlage 1 (als wE)<br>
+                        • Mittlere/Große Unternehmen in Anlage 2 (Post, Abfall, Chemie, Lebensmittel, Produktion, Digital, Forschung)
+                    </p>
+
+                    <button class="btn btn-start" onclick="startAssessment()">
+                        ▶ Prüfung starten
+                    </button>
+                </div>
+            `;
+        }
+
+        // ============================================
+        // 6. INITIALIZATION
+        // ============================================
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            await loadYAMLData();
+            showStartScreen();
+        });
+    </script>
+</body>
+
+</html>

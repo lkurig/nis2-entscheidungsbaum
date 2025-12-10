@@ -1,0 +1,219 @@
+# =====================================================================
+# ANLAGE.YAML – Vollständige juristische Abbildung (§28 BSIG, Anlage 1 & 2)
+# Variante A – Exakt, mit Umsatz/Bilanz, Abs. 2 Kategorien, Overrides
+# =====================================================================
+
+# ---------------------------------------
+# 0. Behördliche Overrides (§28 Abs. 3)
+# ---------------------------------------
+override:
+  enabled: true
+  rules:
+    - id: behoerdliche_einstufung
+      result: [bwe, we, nicht_betroffen]
+      reason_required: true
+      legal_ref: "§28 Abs. 3 BSIG"
+      description: "Behördliche Einzelfallbewertung unabhängig von regulären Schwellenwerten."
+
+# ---------------------------------------
+# 1. KRITIS-Betreiber (§28 Abs. 1 Nr. 1)
+# ---------------------------------------
+kritis:
+  id: kritis_betreiber
+  name: "KRITIS-Betreiber"
+  category: bwe
+  size_relevant: false
+  legal_ref: "§28 Abs. 1 Nr. 1 BSIG"
+  description: "Betreiber kritischer Anlagen gem. KRITIS-Dachverordnung"
+  sectors:
+    - energieversorgung
+    - wasserversorgung
+    - abwasser
+    - gesundheit
+    - ernährung
+    - transport
+    - informationstechnik
+    - telekommunikation
+    - staat_und_verwaltung
+    - finanzen
+
+# ---------------------------------------
+# 2. Sonderfälle ohne Größenprüfung (§28 Abs. 1 Nr. 2–4)
+# ---------------------------------------
+sonderfaelle:
+  - id: qualifizierte_vertrauensdienste
+    name: "Qualifizierte Vertrauensdiensteanbieter"
+    category: bwe
+    size_relevant: false
+    legal_ref: "§28 Abs. 1 Nr. 2 BSIG"
+
+  - id: tld_registry
+    name: "TLD-Registries"
+    category: bwe
+    size_relevant: false
+    legal_ref: "§28 Abs. 1 Nr. 3 BSIG"
+
+  - id: dns_dienst
+    name: "DNS-Diensteanbieter"
+    category: bwe
+    size_relevant: false
+    legal_ref: "§28 Abs. 1 Nr. 4 BSIG"
+
+# ---------------------------------------
+# 3. Telekommunikation (§28 Abs. 1 Nr. 3 / Gesetz)
+# ---------------------------------------
+telekommunikation:
+  id: telekommunikation
+  name: "Öffentliche Telekommunikationsnetze oder -dienste"
+  size_relevant: true
+  legal_ref: "§28 Abs. 1 Nr. 3 BSIG"
+  thresholds:
+    employees_min: 50
+    turnover_min: 10000000       # >10 Mio €
+    balance_min: 10000000        # >10 Mio €
+  result_if_threshold_met: bwe
+  result_if_not_met: nicht_betroffen
+
+# ---------------------------------------
+# 4. Anlage 1 – Sektoren hoher Kritikalität (§28 Abs. 1 Nr. 6)
+# ---------------------------------------
+anlage1:
+  title: "Anlage 1 – Sektoren hoher Kritikalität"
+  legal_ref: "§28 Abs. 1 Nr. 6 BSIG"
+  size_rules:
+    - condition: large_enterprise
+      employees_min: 250
+      turnover_min: 50000000
+      balance_min: 43000000
+      result: bwe
+    - condition: medium_enterprise
+      employees_min: 50
+      employees_max: 249
+      result: we
+    - condition: small_enterprise
+      employees_max: 49
+      result: nicht_betroffen
+
+  sectors:
+    - id: energie
+      name: Energieversorgung (komplett nach Gesetz)
+      einrichtungsarten:
+        - Stromerzeugung
+        - Stromnetzbetreiber
+        - Gasversorgung
+        - Ölförderung
+        - Fernwärme
+        - Wasserstoff
+    - id: gesundheit
+      name: Gesundheit
+      einrichtungsarten:
+        - Krankenhäuser
+        - Labore
+        - Versorgungsdienste
+    - id: digitale_infrastruktur
+      name: Digitale Infrastruktur
+      einrichtungsarten:
+        - Internet Exchange Points
+        - DNS-Dienstanbieter
+        - TLD-Registry
+        - Cloud Computing
+        - Rechenzentren
+        - Content Delivery Network
+        - Vertrauensdiensteanbieter
+        - Öffentliche TK-Netze
+        - Öffentliche TK-Dienste
+        - Managed Service Provider
+        - Managed Security Service Provider
+    - id: transport
+      name: Verkehr & Transport
+      einrichtungsarten:
+        - Luftfahrt
+        - Schienenverkehr
+        - Seeschifffahrt
+        - Binnenschifffahrt
+        - Straßenverkehr
+    - id: wasser
+      name: Wasser & Abwasser
+      einrichtungsarten:
+        - Trinkwasser
+        - Abwasserbeseitigung
+
+# ---------------------------------------
+# 5. Anlage 2 – Sektoren wichtiger Einrichtungen (sonstige Sektoren)
+# ---------------------------------------
+anlage2:
+  title: "Anlage 2 – Sektoren wichtiger Einrichtungen"
+  legal_ref: "BSIG Anlage 2"
+  size_rules:
+    - condition: medium_or_large
+      employees_min: 50
+      result: we
+    - condition: small
+      employees_max: 49
+      result: nicht_betroffen
+
+  sectors:
+    - id: post_kurier
+      name: Post & Kurier
+      einrichtungsarten:
+        - Postdienste
+        - Kurierdienste
+    - id: abfall
+      name: Abfallwirtschaft
+      einrichtungsarten:
+        - Abfallbehandlung
+        - Abfallsammlung
+    - id: chemie
+      name: Chemische Stoffe
+      einrichtungsarten:
+        - Hersteller
+        - Importeure
+    - id: produktion
+      name: Produktion
+      einrichtungsarten:
+        - Maschinenbau
+        - Elektronik
+        - Materialproduktion
+
+# ---------------------------------------
+# 6. §28 Abs. 2 – Eigene Kategorien der wichtigen Einrichtungen
+# ---------------------------------------
+abs2_kategorien:
+  legal_ref: "§28 Abs. 2 BSIG"
+  description: "Wichtige Einrichtungen, unabhängig von Unternehmensgröße"
+  categories:
+    - id: vertrauensdienste
+      name: "Vertrauensdiensteanbieter (nicht qualifiziert)"
+      category: we
+
+    - id: cloud
+      name: "Cloud-Computing-Dienstleister"
+      category: we
+
+    - id: rechenzentren
+      name: "Rechenzentrumsdienste"
+      category: we
+
+    - id: cdn
+      name: "Content Delivery Networks"
+      category: we
+
+    - id: managed_service_provider
+      name: "Managed Service Provider"
+      category: we
+
+    - id: managed_security_service_provider
+      name: "Managed Security Service Provider"
+      category: we
+
+    - id: suchmaschinen
+      name: "Anbieter von Online-Suchmaschinen"
+      category: we
+
+    - id: soziale_netzwerke
+      name: "Plattformen für Dienste sozialer Netzwerke"
+      category: we
+
+    - id: online_marktplaetze
+      name: "Anbieter von Online-Marktplätzen"
+      category: we

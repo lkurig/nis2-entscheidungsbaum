@@ -1,0 +1,159 @@
+# =====================================================================
+# REGELN.YAML – Vollständige Evaluierungslogik (§28 BSIG, Anlagen)
+# Variante A – vollständig, priorisiert, mit Umsatz-/Bilanzlogik
+# =====================================================================
+
+prioritaeten:
+  - override
+  - kritis
+  - sonderfaelle
+  - telekommunikation
+  - abs2_kategorien
+  - anlage1
+  - anlage2
+  - fallback
+
+# ---------------------------------------
+# 1. Override
+# ---------------------------------------
+rules:
+  - id: override_rule
+    priority: 1
+    type: override
+    applies_if: override_active
+    result: override_value
+    legal_ref: "§28 Abs. 3 BSIG"
+
+# ---------------------------------------
+# 2. KRITIS-Betreiber
+# ---------------------------------------
+  - id: kritis_betreiber
+    priority: 2
+    type: category_match
+    category: kritis
+    result: bwe
+    legal_ref: "§28 Abs. 1 Nr. 1"
+
+# ---------------------------------------
+# 3. Sonderfälle (QVD, TLD, DNS)
+# ---------------------------------------
+  - id: sonderfall_qvd
+    priority: 3
+    type: category_match
+    category: qualifizierte_vertrauensdienste
+    result: bwe
+
+  - id: sonderfall_tld
+    priority: 3
+    type: category_match
+    category: tld_registry
+    result: bwe
+
+  - id: sonderfall_dns
+    priority: 3
+    type: category_match
+    category: dns_dienst
+    result: bwe
+
+# ---------------------------------------
+# 4. Telekommunikation mit Umsatz/Bilanz
+# ---------------------------------------
+  - id: tk_large_or_mid
+    priority: 4
+    conditions:
+      - type: category_match
+        category: telekommunikation
+      - type: threshold_any_met
+        thresholds:
+          employees_min: 50
+          turnover_min: 10000000
+          balance_min: 10000000
+    result: bwe
+
+  - id: tk_small
+    priority: 4
+    conditions:
+      - type: category_match
+        category: telekommunikation
+      - type: threshold_not_met
+        thresholds:
+          employees_min: 50
+          turnover_min: 10000000
+          balance_min: 10000000
+    result: nicht_betroffen
+
+# ---------------------------------------
+# 5. ABS2-Kategorien (immer wE)
+# ---------------------------------------
+  - id: abs2_wichtige_einrichtung
+    priority: 5
+    type: category_group_match
+    group: abs2_kategorien
+    result: we
+    legal_ref: "§28 Abs. 2"
+
+# ---------------------------------------
+# 6. Anlage 1 – Große (bwE)
+# ---------------------------------------
+  - id: anlage1_large
+    priority: 6
+    conditions:
+      - type: sector_category
+        category: anlage1
+      - type: threshold_all_met
+        thresholds:
+          employees_min: 250
+          turnover_min: 50000000
+          balance_min: 43000000
+    result: bwe
+
+# 6b – Mittlere (wE)
+  - id: anlage1_medium
+    priority: 6
+    conditions:
+      - type: sector_category
+        category: anlage1
+      - type: threshold_range
+        employees_min: 50
+        employees_max: 249
+    result: we
+
+# 6c – Kleine (<50)
+  - id: anlage1_small
+    priority: 6
+    conditions:
+      - type: sector_category
+        category: anlage1
+      - type: threshold_range
+        employees_max: 49
+    result: nicht_betroffen
+
+# ---------------------------------------
+# 7. Anlage 2 – Mittlere/große (wE)
+# ---------------------------------------
+  - id: anlage2_medium_large
+    priority: 7
+    conditions:
+      - type: sector_category
+        category: anlage2
+      - type: threshold_range
+        employees_min: 50
+    result: we
+
+# 7b – Kleine
+  - id: anlage2_small
+    priority: 7
+    conditions:
+      - type: sector_category
+        category: anlage2
+      - type: threshold_range
+        employees_max: 49
+    result: nicht_betroffen
+
+# ---------------------------------------
+# 999. Fallback
+# ---------------------------------------
+  - id: fallback
+    priority: 999
+    result: nicht_betroffen
+    explanation: "Keiner Kategorie zuordenbar"
